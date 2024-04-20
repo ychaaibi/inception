@@ -1,0 +1,4 @@
+.php linguist-detectable=false
+.hhi linguist-detectable=false
+.cpp linguist-detectable=true
+
