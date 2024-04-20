@@ -1,0 +1,154 @@
+# **************************************************************************** #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    docker-compose.yaml                                :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: ychaaibi <ychaaibi@student.42.fr>          +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2023/11/05 17:17:33 by ychaaibi          #+#    #+#              #
+#    Updated: 2023/11/05 17:17:44 by ychaaibi         ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
+
+version: "3.5"
+
+services:
+  mariadb:
+    build: ./requirements/mariadb
+    image: mariadb:1337
+    container_name: mariadb
+    expose:
+      - 3306
+    networks:
+      - backend
+    volumes:
+      - mariadb_vol:/var/lib/mysql
+    env_file:
+      - .env
+    restart: always
+
+  wordpress:
+    build: ./requirements/wordpress
+    image: wordpress:1337
+    container_name: wordpress
+    expose:
+      - 9000
+    volumes:
+      - wordpress_vol:/var/www/html
+    env_file:
+      - .env
+    depends_on:
+      - mariadb
+    networks:
+      - backend
+    restart: always
+
+  nginx:
+    build: ./requirements/nginx
+    image: nginx:1337
+    container_name: nginx
+    ports:
+      - 443:443
+    networks:
+      - backend
+    volumes:
+      - wordpress_vol:/var/www/html
+    env_file:
+      - .env
+    depends_on:
+      - wordpress
+    restart: always
+
+  redis:
+    build: ./requirements/bonus/redis
+    image: redis:1337
+    container_name: redis
+    expose:
+      - 6379
+    networks:
+      - backend
+    volumes:
+      - wordpress_vol:/var/www/html
+    depends_on:
+      - wordpress
+    restart: always
+    
+  ftp:
+    build: ./requirements/bonus/ftp
+    image: ftp:1337
+    container_name: ftp
+    ports:
+      - 30000-30010:30000-30010
+      - 20-21:20-21
+    volumes:
+      - wordpress_vol:/var/www/html
+    networks:
+      - backend
+    env_file:
+      - .env
+    depends_on:
+      - wordpress
+    restart: always
+
+  adminer:
+    build: ./requirements/bonus/adminer
+    image: adminer:1337
+    container_name: adminer
+    ports:
+      - 8080:8080
+    networks:
+      - backend
+    depends_on:
+      - mariadb
+    restart: always
+
+  website:
+    build: ./requirements/bonus/website
+    image: website:1337
+    container_name: website
+    ports:
+      - 5000:5000
+    networks:
+      - backend
+    restart: always
+
+  cadvisor:
+    build: ./requirements/bonus/cadvisor
+    image: cadvisor:1337
+    container_name: cadvisor
+    ports:
+      - 9090:8080
+    volumes:
+      - /:/rootfs:ro 
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - backend
+    privileged: true
+    restart: always
+
+
+volumes:
+  wordpress_vol:
+    name: wordpress_vol
+    driver: local
+    driver_opts:
+      device: /home/ychaaibi/data/wordpress_vol
+      type: bind
+      o: bind
+  mariadb_vol:
+    name: mariadb_vol
+    driver: local
+    driver_opts:
+      device: /home/ychaaibi/data/mariadb_vol
+      type: bind
+      o: bind
+
+networks:
+  backend:
+    name: backend
+    driver: bridge
+
+
+
