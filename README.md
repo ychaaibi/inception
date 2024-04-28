@@ -1,6 +1,6 @@
 # Multi-Container WordPress with Docker
 
-```Project Completion Date:** 2023-11-10```
+```Project Completion Date: 2023-11-10```
 
 ## Project Overview 📋
 
